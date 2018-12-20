@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'gitlab.mydomain.com'
+    container_name: gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.mydomain.com'
+        nginx['enable'] = true
+        nginx['listen_port'] = 50443
+        nginx['listen_addresses'] = ['0.0.0.0', '[::]']
+        nginx['listen_https'] = false
+        nginx['redirect_http_to_https'] = true
+        gitlab_rails['trusted_proxies'] = ['172.17.0.0/16','192.168.1.0/24','172.29.74.0/24','172.29.74.12','172.19.0.2']
+        nginx['ssl_certificate'] = "/etc/gitlab/ssl/gitlab.crt"
+        nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/gitlab.key"
+        letsencrypt['enable'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"      
+        }
+        gitlab_rails['time_zone'] = 'Asia/Yekaterinburg'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2022 
+        web_server['external_users'] = ['nginx','gitlab-www','git']
+    ports:
+      - '50443:443'
+      - '2022:22'
+    volumes:
+      - ./gitlab/config:/etc/gitlab
+      - ./gitlab/logs:/var/log/gitlab
+      - ./gitlab/data:/var/opt/gitlab
+      - ./nginx/ssl:/etc/gitlab/ssl
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    container_name: 'nginx'
+#    links:                           
+#      - gitlab:gitlab
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /home/gilmullinrr/gitlab2/gitlab/data/gitlab-workhorse:/var/opt/gitlab/gitlab-workhorse
