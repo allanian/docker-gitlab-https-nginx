@@ -7,7 +7,7 @@ services:
     container_name: gitlab
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.mydomain.com'
+        external_url 'https://gitlab.mydomain.com'
         nginx['enable'] = true
         nginx['listen_port'] = 50443
         nginx['listen_addresses'] = ['0.0.0.0', '[::]']
